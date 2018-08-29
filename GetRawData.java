@@ -14,19 +14,28 @@ enum DownloadStatus {IDLE, PROCESSING, NOT_INITIALIZED, FAILED_OR_EMPTY, OK}
 
 class GetRawData extends AsyncTask<String, Void, String> {
     private static final String TAG = "GetRawData";
-
     private DownloadStatus mDownloadStatus;
+    private final onDownloadComplete mCaallback;
+
+    interface onDownloadComplete {
+        void onDownloadComplete(String data, DownloadStatus status);
+    }
 
 
-    public GetRawData() {
-        mDownloadStatus = DownloadStatus.IDLE;
+
+    public GetRawData(onDownloadComplete callback) {
+        this.mDownloadStatus = DownloadStatus.IDLE;
+        mCaallback = callback;
 
     }
 
     @Override
     protected void onPostExecute(String s) {
         Log.d(TAG, "onPostExecute: =" + s);
-
+        if (mCaallback != null) {
+            mCaallback.onDownloadComplete(s, mDownloadStatus);
+        }
+        Log.d(TAG, "onPostExecute: ends");
     }
 
     @Override
@@ -64,6 +73,9 @@ class GetRawData extends AsyncTask<String, Void, String> {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 result.append(line).append("\n");
             }
+
+            mDownloadStatus = DownloadStatus.OK;
+            return result.toString();
 
 
         } catch (MalformedURLException e) {
